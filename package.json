@@ -1,0 +1,29 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "",
+  "homepage": "https://github.com/AldresLuiz/backend-tibia-store#readme",
+  "bugs": {
+    "url": "https://github.com/AldresLuiz/backend-tibia-store/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AldresLuiz/backend-tibia-store.git"
+  },
+  "license": "ISC",
+  "author": "AldresLuiz",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "docker compose up -d --build"
+  },
+  "dependencies": {
+    "cookie-parser": "^1.4.7",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "pg": "^8.23.0",
+    "redis": "^6.2.1"
+  },
+  "devDependencies": {}
+}
