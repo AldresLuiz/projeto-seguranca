@@ -122,6 +122,7 @@ router.post("/auth/login", async (req, res)=>{
     })
 })
 
+// Rota para renovação de sessão
 router.get("/auth/refresh", async (req, res) => {
     try {
         // Obtem REFRESH TOKEN
@@ -207,7 +208,7 @@ router.get("/auth/refresh", async (req, res) => {
             [userId]
         )
 
-        // Se o usuario não existir mais retorna STATUS 401 usuario não encontrado
+        // Se o usuario não existir mais, retorna STATUS 401 usuario não encontrado
         if (dbrequest.rowCount === 0) {await redis.del(`auth:session:${newSessionId}`) ;return res.status(401).json({error: "Usuário não encontrado"})}
         
         // Retorna os Tokens de acesso
@@ -239,6 +240,90 @@ router.get("/auth/refresh", async (req, res) => {
             error: "Erro interno do servidor"
         })
     }
+})
+
+// Rota para excluir sessão atual
+router.get("/auth/logout", async(req, res) => {
+    try{
+        // Tenta obter o REFRESH TOKEN
+        const refreshToken = req.cookies.REFRESH
+        if (!refreshToken) return res.status(401).json({ error: "Refresh token não encontrado" })
+        
+        // Valida o REFRESH TOKEN
+        let payload
+        try {
+            payload = verifyRefreshToken(refreshToken)
+        } catch {
+            return res.status(401).json({
+                error: "Refresh token inválido ou expirado"
+            })
+        }
+        
+        // Verifica os campos presentes no TOKEN
+        const userId = payload.sub
+        const sessionId = payload.jti
+        const tokenVersion = payload.version
+        if (!userId || !sessionId || tokenVersion == null) return res.status(401).json({ error: "Refresh token inválido" })
+        
+        // Valida se a sessão do REFRESH TOKEN é valida caso VERDADEIRO ele apaga a sessão do redis
+        const result = await redis.eval(
+            `
+            local sessionUserId = redis.call("GET", KEYS[1])
+
+            if not sessionUserId then
+                return 0
+            end
+
+            if sessionUserId ~= ARGV[1] then
+                return 0
+            end
+
+            local currentVersion = redis.call("GET", KEYS[2])
+
+            if not currentVersion then
+                return 0
+            end
+
+            if currentVersion ~= ARGV[2] then
+                return 0
+            end
+
+            redis.call("DEL", KEYS[1])
+
+            return 1
+            `,
+            {
+                keys: [
+                    `auth:session:${sessionId}`,
+                    `auth:user:${userId}:version`,
+                    `auth:session:${newSessionId}`
+                ],
+                arguments: [
+                    userId,
+                    String(tokenVersion)
+                ]
+            }
+        )
+
+        // Retorna status 401 caso versão de sessão seja divergente ou id de sessão não exista
+        if(result != 1) return res.status(401).json({ error: "Sessão inválida ou expirada" })
+
+        // Logout efetuado
+        res.status(200).json({
+            message: "Logout efetuado com sucesso!"
+        })
+    } catch (error) {
+        console.error(error)
+
+        return res.status(500).json({
+            error: "Erro interno do servidor"
+        })
+    }
+})
+
+// Rota para invalidar todas as sessões de um usuario
+router.get("/auth/logoutall", async(req, res) => {
+
 })
 
 export default router
