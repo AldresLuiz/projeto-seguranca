@@ -19,6 +19,7 @@
     "dev": "docker compose up -d --build"
   },
   "dependencies": {
+    "@abacatepay/sdk": "^2.0.3",
     "bcrypt": "^6.0.0",
     "cookie-parser": "^1.4.7",
     "express": "^5.2.1",
