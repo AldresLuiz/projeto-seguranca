@@ -1,6 +1,7 @@
 import e from "express"
 import cp from "cookie-parser"
 import authController from "./controller/authController.js"
+import productsController from "./controller/productsController.js"
 import { verifyAccessToken } from "./service/authService.js"
 const app = e()
 
@@ -19,17 +20,7 @@ app.use((req,res,next)=>{
 })
 
 app.use(authController)
-
-// Middleware de autenticação
-app.use((req, res, next)=>{
-  const access = req.cookies.ACCESS
-  if (!access) return res.status(403).json({ error: "é necessario estar autenticado para acessar essa rota" })
-  
-  if(!verifyAccessToken(access)) return res.status(403).json({ error: "Acesso invalido/expirado" })
-  next()
-})
-
-
+app.use(productsController)
 
 app.listen(Number(process.env.BACKEND_PORT), ()=>{
     console.log(`Servidor iniciado: http://0.0.0.0:${Number(process.env.BACKEND_PORT)}`)

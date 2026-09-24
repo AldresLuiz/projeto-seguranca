@@ -6,12 +6,11 @@ import pool from "../service/databaseService.js" //pool de DB do postgress
 import { createAccessToken, createRefreshToken, verifyRefreshToken } from "../service/authService.js" // Criação dos tokens de acesso
 import { authLoginDTO, authRegisterDTO } from "../datamodel/authDTO.js" // Datamodels
 
-const router = Router();
 const redis = r.createClient({
     url: process.env.REDIS_URL
 })
-
 await redis.connect()
+const router = Router();
 
 // Rota para criar usuario
 router.post("/auth/register", async (req, res)=>{
@@ -145,7 +144,7 @@ router.get("/auth/refresh", async (req, res) => {
         const tokenVersion = payload.version
         if (!userId || !sessionId || tokenVersion == null) return res.status(401).json({ error: "Refresh token inválido" })
 
-        // Faz validação da sessão atual e cria uma nova sessão anatomicamente
+        // Faz validação da sessão atual e cria uma nova sessão atomicamente
         const newSessionId = await crypto.randomUUID()
         const result = await redis.eval(
             `
@@ -295,8 +294,7 @@ router.get("/auth/logout", async(req, res) => {
             {
                 keys: [
                     `auth:session:${sessionId}`,
-                    `auth:user:${userId}:version`,
-                    `auth:session:${newSessionId}`
+                    `auth:user:${userId}:version`
                 ],
                 arguments: [
                     userId,
@@ -307,6 +305,9 @@ router.get("/auth/logout", async(req, res) => {
 
         // Retorna status 401 caso versão de sessão seja divergente ou id de sessão não exista
         if(result != 1) return res.status(401).json({ error: "Sessão inválida ou expirada" })
+
+        res.clearCookie("REFRESH")
+        res.clearCookie("ACCESS")
 
         // Logout efetuado
         res.status(200).json({
@@ -323,7 +324,83 @@ router.get("/auth/logout", async(req, res) => {
 
 // Rota para invalidar todas as sessões de um usuario
 router.get("/auth/logoutall", async(req, res) => {
+    try{
+        // Tenta obter o REFRESH TOKEN
+        const refreshToken = req.cookies.REFRESH
+        if (!refreshToken) return res.status(401).json({ error: "Refresh token não encontrado" })
+        
+        // Valida o REFRESH TOKEN
+        let payload
+        try {
+            payload = verifyRefreshToken(refreshToken)
+        } catch {
+            return res.status(401).json({
+                error: "Refresh token inválido ou expirado"
+            })
+        }
 
+        // Verifica os campos presentes no TOKEN
+        const userId = payload.sub
+        const sessionId = payload.jti
+        const tokenVersion = payload.version
+        if (!userId || !sessionId || tokenVersion == null) return res.status(401).json({ error: "Refresh token inválido" })
+
+        // Valida se a sessão do REFRESH TOKEN é valida caso VERDADEIRO ele apaga a sessão do redis
+        const result = await redis.eval(
+            `
+            local sessionUserId = redis.call("GET", KEYS[1])
+
+            if not sessionUserId then
+                return 0
+            end
+
+            if sessionUserId ~= ARGV[1] then
+                return 0
+            end
+
+            local currentVersion = redis.call("GET", KEYS[2])
+
+            if not currentVersion then
+                return 0
+            end
+
+            if currentVersion ~= ARGV[2] then
+                return 0
+            end
+
+            redis.call("INCR", KEYS[2])
+
+            return 1
+            `,
+            {
+                keys: [
+                    `auth:session:${sessionId}`,
+                    `auth:user:${userId}:version`
+                ],
+                arguments: [
+                    userId,
+                    String(tokenVersion)
+                ]
+            }
+        )
+
+        // Retorna status 401 caso versão de sessão seja divergente ou id de sessão não exista
+        if(result != 1) return res.status(401).json({ error: "Sessão inválida ou expirada" })
+
+        res.clearCookie("REFRESH")
+        res.clearCookie("ACCESS")
+
+        // Logout efetuado
+        res.status(200).json({
+            message: "Logout de todas as sessões efetuado."
+        })
+    } catch (error){
+        console.error(error)
+
+        return res.status(500).json({
+            error: "Erro interno do servidor"
+        })
+    }
 })
 
 export default router
