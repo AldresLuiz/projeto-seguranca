@@ -5,7 +5,7 @@ import r from "redis"
 const redis = r.createClient({url: process.env.REDIS_URL})
 redis.connect()
 
-export async function createProduct(res, userId, name, price, type) {
+export async function createProduct(res, userId, name, price, type, item, quantity) {
     try{
         const dbRequest = await transaction(async (client)=>{
             const user = await client.query(`
@@ -26,15 +26,19 @@ export async function createProduct(res, userId, name, price, type) {
             "ownerId",
             "name",
             "price",
-            "type"
-            ) VALUES ($1, $2, $3, $4, $5)
+            "type",
+            "item",
+            "quantity"
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7)
             RETURNING *
             `, [
                 await crypto.randomUUID(),
                 user.rows[0].userId,
                 name,
                 price,
-                type
+                type,
+                item ?? null,
+                quantity
             ])
     
             return produto.rows[0]
