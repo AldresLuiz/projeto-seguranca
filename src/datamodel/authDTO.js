@@ -22,5 +22,5 @@ export const authLoginDTO = z.object({
 
 export const authUserMiddlewareDTO = z.object({
     userId: z.uuid(),
-    role: z.int
+    role: z.int()
 })
