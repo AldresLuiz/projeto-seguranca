@@ -47,7 +47,6 @@ export function createRefreshToken(user, sessionId, version) {
     );
 }
 
-
 export function verifyAccessToken(token) {
     return jwt.verify(
         token,
