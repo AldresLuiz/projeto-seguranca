@@ -1,6 +1,6 @@
 INSERT INTO users(
     "userId",
-    "username",
+    "name",
     "email",
     "password",
     "role"
