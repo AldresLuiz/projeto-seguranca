@@ -3,7 +3,12 @@ import { productsCreateDTO, productsDeleteDTO, productsSearchDTO, productsUpdate
 import { authMiddleware } from "../middleware/authMiddleware.js"
 import { authUserMiddlewareDTO } from "../datamodel/authDTO.js";
 import { createProduct, deleteProduct, listProduct, searchProduct, updateProduct } from "../service/productService.js";
+import r from "redis"
 
+const redis = r.createClient({
+    url: process.env.REDIS_URL
+})
+await redis.connect()
 const router = Router()
 
 router.get("/product/list", async (req, res)=>{
@@ -26,7 +31,7 @@ router.post("/product/create", authMiddleware, async (req, res)=>{
 
     if(!body.success) return res.status(400).json({error: "body invalido ou incompleto"})
     
-    return await createProduct(res, userValidator.data.userId, body.data.name, body.data.price, body.data.type)
+    return await createProduct(res, userValidator.data.userId, body.data.name, body.data.price, body.data.type, body.data.item, body.data.quantity)
 })
 
 router.post("/product/update", authMiddleware, async (req, res)=>{

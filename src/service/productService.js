@@ -5,7 +5,7 @@ import r from "redis"
 const redis = r.createClient({url: process.env.REDIS_URL})
 redis.connect()
 
-export async function createProduct(res, userId, name, price, type) {
+export async function createProduct(res, userId, name, price, type, item, quantity) {
     try{
         const dbRequest = await transaction(async (client)=>{
             const user = await client.query(`
@@ -26,21 +26,25 @@ export async function createProduct(res, userId, name, price, type) {
             "ownerId",
             "name",
             "price",
-            "type"
-            ) VALUES ($1, $2, $3, $4, $5)
+            "type",
+            "item",
+            "quantity"
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7)
             RETURNING *
             `, [
                 await crypto.randomUUID(),
                 user.rows[0].userId,
                 name,
                 price,
-                type
+                type,
+                item ?? null,
+                quantity
             ])
     
             return produto.rows[0]
         })
         
-        return res.status(200).json(dbRequest)
+        return res.status(200).json({message: "Produto criado com sucesso"})
     } catch (error) {
         return res.status(500).json({error:error.message})
     }
@@ -117,7 +121,7 @@ export async function updateProduct(res, ownerId ,productId, name, price, type, 
             if (produto.rowCount == 0) { throw new Error("Produto não existe") } 
             return produto.rows[0] 
         }) 
-        return res.status(200).json(dbRequest)
+        return res.status(200).json({ message: "Produto atualizado com sucesso" })
     } catch (error) { 
         return res.status(500).json({ error: error.message }) 
     } 

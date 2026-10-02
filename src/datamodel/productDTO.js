@@ -11,15 +11,16 @@ export const productsSearchDTO = z.object({
 
 export const productsCreateDTO = z.object({
     name: z.string().min(3).max(255),
-    price: z.bigint(),
+    price: z.coerce.bigint(),
     type: z.string().min(3).max(255),
-    item: z.string().min(3).max(255).optional()
+    item: z.string().min(3).max(255).optional(),
+    quantity: z.int().nonnegative().default(1)
 })
 
 export const productsUpdateDTO = z.object({
     productId: z.uuid(),
     name: z.string().min(3).max(255).optional(),
-    price: z.bigint().optional(),
+    price: z.coerce.bigint().optional(),
     type: z.string().min(3).max(255).optional(),
     item: z.string().min(3).max(255).optional(),
     quantity: z.int().optional()
