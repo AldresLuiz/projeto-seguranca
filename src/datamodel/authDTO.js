@@ -6,11 +6,7 @@ export const authRegisterDTO = z.object({
     email: z.email(),
     password: z.string()
         .min(8, "A senha deve conter no minimo 8 caracteres")
-        .max(72, "A senha deve ser menor que 72 caracteres"),
-    number: z.string()
-        .min(11, "O numero de telefone deve conter 11 digitos")
-        .max(11, "O numero de telefone deve conter 11 digitos")
-        .optional()
+        .max(72, "A senha deve ser menor que 72 caracteres")
 })
 
 export const authLoginDTO = z.object({

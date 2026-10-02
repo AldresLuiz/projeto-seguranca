@@ -3,6 +3,7 @@ import cp from "cookie-parser"
 import authController from "./controller/authController.js"
 import productsController from "./controller/productsController.js"
 import cartController from "./controller/cartController.js"
+import transactionsController from "./controller/transactionsController.js"
 import { verifyAccessToken } from "./service/authService.js"
 const app = e()
 
@@ -23,6 +24,7 @@ app.use((req,res,next)=>{
 app.use(authController)
 app.use(productsController)
 app.use(cartController)
+app.use(transactionsController)
 
 app.listen(Number(process.env.BACKEND_PORT), ()=>{
     console.log(`Servidor iniciado: http://0.0.0.0:${Number(process.env.BACKEND_PORT)}`)

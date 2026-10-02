@@ -44,7 +44,7 @@ export async function createProduct(res, userId, name, price, type, item, quanti
             return produto.rows[0]
         })
         
-        return res.status(200).json(dbRequest)
+        return res.status(200).json({message: "Produto criado com sucesso"})
     } catch (error) {
         return res.status(500).json({error:error.message})
     }
@@ -121,7 +121,7 @@ export async function updateProduct(res, ownerId ,productId, name, price, type, 
             if (produto.rowCount == 0) { throw new Error("Produto não existe") } 
             return produto.rows[0] 
         }) 
-        return res.status(200).json(dbRequest)
+        return res.status(200).json({ message: "Produto atualizado com sucesso" })
     } catch (error) { 
         return res.status(500).json({ error: error.message }) 
     } 
